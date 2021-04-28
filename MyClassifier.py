@@ -2,6 +2,7 @@
 
 import sys
 import math
+from decision_tree import Decision_Tree
 
 
 class Classifier:
@@ -175,8 +176,34 @@ class Classifier:
 
         return evidence_yes, evidence_no
 
+    def information(self, n_yes, n_no, n_total):
+
+        if n_yes == 0:
+
+            n_yes = n_total
+
+        if n_no == 0:
+
+            n_no = n_total
+
+        return -((n_yes / n_total) * math.log2(n_yes / n_total)) - (
+            (n_no / n_total) * math.log2(n_no / n_total)
+        )
+
+    def recursive_print_rule(self, node):
+
+        print(f"{'-' * node.depth} {node.rule}")
+
+        for i in node.children:
+
+            self.recursive_print_rule(i)
+
     # TODO: Decision Tree
     def decision_tree(self):
+
+        tree = Decision_Tree(self.training_data, self.training_labels)
+
+        self.recursive_print_rule(tree.root)
 
         return
 
