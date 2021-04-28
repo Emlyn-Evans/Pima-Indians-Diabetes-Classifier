@@ -192,7 +192,13 @@ class Classifier:
 
     def recursive_print_rule(self, node):
 
-        print(f"{'-' * node.depth} {node.rule}")
+        if node.parent is not None:
+
+            print(f"{'-' * node.depth} {node.parent.rule} = {node.category}")
+
+        else:
+
+            print(f"{'-' * node.depth} Root rule: {node.rule}")
 
         for i in node.children:
 
@@ -201,9 +207,16 @@ class Classifier:
     # TODO: Decision Tree
     def decision_tree(self):
 
+        # What happens when we get given categories we haven't seen before?
+
         tree = Decision_Tree(self.training_data, self.training_labels)
 
-        self.recursive_print_rule(tree.root)
+        # self.recursive_print_rule(tree.root)
+
+        test = ["high", "low", "low", "high", "low", "low", "high", "high"]
+        test = ["low", "high", "high", "high", "high", "high", "high", "high"]
+
+        print(tree.predict(test))
 
         return
 

@@ -2,7 +2,9 @@ import math
 
 
 class Node:
-    def __init__(self, data, labels, n_attributes, n_yes, n_no, depth):
+    def __init__(
+        self, data, labels, n_attributes, n_yes, n_no, parent, depth, category
+    ):
 
         self.data = data
         self.labels = labels
@@ -13,8 +15,11 @@ class Node:
         self.information_counts = {}
         self.information = self.compute_information(self.n_yes, self.n_no, self.n)
         self.rule = None
-        self.children = []
+        self.predict = None
+        self.parent = parent
+        self.children = {}
         self.depth = depth
+        self.category = category
 
         return
 
@@ -109,7 +114,7 @@ class Decision_Tree:
 
                 n_no += 1
 
-        self.root = Node(data, labels, len(data[0]), n_yes, n_no, 0)
+        self.root = Node(data, labels, len(data[0]), n_yes, n_no, None, 0, None)
 
         self.compute_tree_recursion(self.root)
 
@@ -122,6 +127,14 @@ class Decision_Tree:
         if node.rule is None:
 
             # We reach the stopping condition
+            if node.n_yes >= node.n_no:
+
+                node.predict = "yes"
+
+            else:
+
+                node.predict = "no"
+
             return
 
         data_split = {}
@@ -145,9 +158,22 @@ class Decision_Tree:
                 node.n_attributes,
                 node.information_counts[node.rule][key][0],
                 node.information_counts[node.rule][key][1],
+                node,
                 node.depth + 1,
+                key,
             )
-            node.children.append(child)
+
+            node.children[key] = child
             self.compute_tree_recursion(child)
 
         return
+
+    def predict(self, test):
+
+        node = self.root
+
+        while node.predict is None:
+
+            node = node.children[test[node.rule]]
+
+        return node.predict
