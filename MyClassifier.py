@@ -2,6 +2,7 @@
 
 import sys
 import math
+import random
 from decision_tree import Decision_Tree
 
 
@@ -21,7 +22,7 @@ class Classifier:
         # Extract the training and testing data
         self.training_data, self.training_labels = self.extract_data(self.training_file)
         self.n_training = len(self.training_data)
-        self.testing_data = self.extract_data(self.testing_file)
+        self.testing_data = self.extract_data(self.testing_file)[0]
         self.n_testing = len(self.testing_data)
 
         if self.algorithm == "NB":
@@ -176,49 +177,96 @@ class Classifier:
 
         return evidence_yes, evidence_no
 
-    def information(self, n_yes, n_no, n_total):
-
-        if n_yes == 0:
-
-            n_yes = n_total
-
-        if n_no == 0:
-
-            n_no = n_total
-
-        return -((n_yes / n_total) * math.log2(n_yes / n_total)) - (
-            (n_no / n_total) * math.log2(n_no / n_total)
-        )
-
-    def recursive_print_rule(self, node):
-
-        if node.parent is not None:
-
-            print(f"{'-' * node.depth} {node.parent.rule} = {node.category}")
-
-        else:
-
-            print(f"{'-' * node.depth} Root rule: {node.rule}")
-
-        for i in node.children:
-
-            self.recursive_print_rule(i)
-
-    # TODO: Decision Tree
     def decision_tree(self):
 
         # What happens when we get given categories we haven't seen before?
+        # i.e. we only see high or low, and we get thrown a medium to test?
 
         tree = Decision_Tree(self.training_data, self.training_labels)
 
-        # self.recursive_print_rule(tree.root)
+        tree.print_tree_dfs()
 
-        test = ["high", "low", "low", "high", "low", "low", "high", "high"]
-        test = ["low", "high", "high", "high", "high", "high", "high", "high"]
+        # test = ["overcast", "hot", "normal", "false"]
+        # test = ["rainy", "cool", "normal", "true"]
 
-        print(tree.predict(test))
+        # print(tree.predict(test))
 
         return
+
+    def generate_n_sample_folds(self, n):
+
+        folds = {}
+
+        for i in range(n):
+
+            folds[i] = []
+
+        yes_index = []
+        size_yes = 0
+        no_index = []
+        size_no = 0
+
+        for i in range(self.n_training):
+
+            if self.training_labels[i] == "yes":
+
+                yes_index.append(i)
+                size_yes += 1
+
+            else:
+
+                no_index.append(i)
+                size_no += 1
+
+        # Split yes classes between n folds
+        while size_yes >= n:
+
+            for i in range(n):
+
+                folds[i].append(yes_index[size_yes - 1 - i])
+
+            size_yes -= n
+
+        for i in range(size_yes):
+
+            folds[i].append(yes_index[size_yes - 1 - i])
+
+        # Split no classes between n folds
+        while size_no >= n:
+
+            for i in range(n):
+
+                folds[i].append(no_index[size_no - 1 - i])
+
+            size_no -= n
+
+        for i in range(size_no):
+
+            folds[i].append(no_index[size_no - 1 - i])
+
+        return folds
+
+    def write_n_sample_folds(self, filename, folds):
+
+        with open(filename, "w") as file:
+
+            for key in folds:
+
+                file.write(f"fold{key}\n")
+
+                for i in range(len(folds[key])):
+
+                    string = ""
+
+                    for j in range(self.n_attributes):
+
+                        string += f"{self.training_data[folds[key][i]][j]},"
+
+                    string.strip(",")
+
+                    file.write(string + "\n")
+
+                file.write("\n")
 
 
 # Run with: python3 MyClassifier.py pima.csv pima.csv NB
@@ -230,3 +278,6 @@ testing_file = sys.argv[2]
 algorithm = sys.argv[3]
 
 classifier = Classifier(training_file, testing_file, algorithm)
+
+folds = classifier.generate_n_sample_folds(10)
+classifier.write_n_sample_folds("pima-folds.csv", folds)

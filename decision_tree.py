@@ -1,11 +1,21 @@
+"""Decision Tree"""
+
 import math
 
 
 class Node:
     def __init__(
-        self, data, labels, n_attributes, n_yes, n_no, parent, depth, category
+        self,
+        depth,
+        data,
+        labels,
+        n_attributes,
+        n_yes,
+        n_no,
+        rule_string,
     ):
 
+        self.depth = depth
         self.data = data
         self.labels = labels
         self.n = len(data)
@@ -16,15 +26,14 @@ class Node:
         self.information = self.compute_information(self.n_yes, self.n_no, self.n)
         self.rule = None
         self.predict = None
-        self.parent = parent
+        self.rule_string = rule_string
         self.children = {}
-        self.depth = depth
-        self.category = category
 
         return
 
     def compute_information(self, n_yes, n_no, n_total):
 
+        # If we get 0 counts, log will throw and error
         if n_yes == 0:
 
             n_yes = n_total
@@ -33,12 +42,17 @@ class Node:
 
             n_no = n_total
 
-        return -((n_yes / n_total) * math.log2(n_yes / n_total)) - (
+        # Formula for two classes
+        information = -((n_yes / n_total) * math.log2(n_yes / n_total)) - (
             (n_no / n_total) * math.log2(n_no / n_total)
         )
 
+        return information
+
     def compute_best_attribute(self):
 
+        # We create a dictionary for each attribute, then dictionaries for each
+        # category in each attribute with counts for classes.
         for i in range(self.n_attributes):
 
             self.information_counts[i] = {}
@@ -60,7 +74,7 @@ class Node:
 
                     self.information_counts[j][self.data[i][j]][1] += 1
 
-        # Information gain for each attribute
+        # Compute information gain for each attribute and select the best
         best_gain = None
 
         for i in range(self.n_attributes):
@@ -74,26 +88,28 @@ class Node:
                     + self.information_counts[i][key][1]
                 ) / self.n
 
-                attribute_information = weight * self.compute_information(
+                attribute_information += weight * self.compute_information(
                     self.information_counts[i][key][0],
                     self.information_counts[i][key][1],
-                    self.n,
+                    self.information_counts[i][key][0]
+                    + self.information_counts[i][key][1],
                 )
 
-            # If this is 0, then we are at a leaf and everything is sorted
-            if attribute_information > 0:
+            # If the gain is 0, then splitting off this attribute is redundant
+            if self.information - attribute_information > 0:
 
-                # If this is 0, then splitting off this attribute is redundant
-                if self.information - attribute_information > 0:
+                # print(
+                #     f"Attribute: {i}: Total_Info: {self.information}: Att_Info: {attribute_information}: Gain: {self.information - attribute_information}"
+                # )
 
-                    if best_gain is None:
+                if best_gain is None:
 
-                        best_gain = self.information - attribute_information
-                        self.rule = i
+                    best_gain = self.information - attribute_information
+                    self.rule = i
 
-                    if self.information - attribute_information > best_gain:
+                if self.information - attribute_information > best_gain:
 
-                        self.rule = i
+                    self.rule = i
 
         return
 
@@ -114,19 +130,19 @@ class Decision_Tree:
 
                 n_no += 1
 
-        self.root = Node(data, labels, len(data[0]), n_yes, n_no, None, 0, None)
+        self.root = Node(1, data, labels, len(data[0]), n_yes, n_no, "")
 
         self.compute_tree_recursion(self.root)
 
-        return
-
     def compute_tree_recursion(self, node):
 
+        # Compute the best attribute to split off at each node
         node.compute_best_attribute()
 
+        # Stopping condition: no attributes give information gain
         if node.rule is None:
 
-            # We reach the stopping condition
+            # We take the majority guess
             if node.n_yes >= node.n_no:
 
                 node.predict = "yes"
@@ -135,8 +151,20 @@ class Decision_Tree:
 
                 node.predict = "no"
 
+            node.rule_string += f": {node.predict}"
+
             return
 
+        # Update rule string for identification
+        if node.rule_string == "":
+
+            node.rule_string += f"{node.rule} = "
+
+        else:
+
+            node.rule_string += f", {node.rule} = "
+
+        # Split the data into categories for children
         data_split = {}
         labels_split = {}
 
@@ -150,17 +178,17 @@ class Decision_Tree:
             data_split[node.data[i][node.rule]].append(node.data[i])
             labels_split[node.data[i][node.rule]].append(node.labels[i])
 
+        # Create child and recurse
         for key in data_split:
 
             child = Node(
+                node.depth + 1,
                 data_split[key],
                 labels_split[key],
                 node.n_attributes,
                 node.information_counts[node.rule][key][0],
                 node.information_counts[node.rule][key][1],
-                node,
-                node.depth + 1,
-                key,
+                node.rule_string + f"{key}",
             )
 
             node.children[key] = child
@@ -170,6 +198,7 @@ class Decision_Tree:
 
     def predict(self, test):
 
+        # Search down height of tree to find prediction
         node = self.root
 
         while node.predict is None:
@@ -177,3 +206,15 @@ class Decision_Tree:
             node = node.children[test[node.rule]]
 
         return node.predict
+
+    def print_tree_dfs(self, node=None):
+
+        if node is None:
+
+            node = self.root
+
+        print(f"{'-' * node.depth} {node.rule_string}")
+
+        for i in node.children:
+
+            self.print_tree_dfs(node.children[i])
