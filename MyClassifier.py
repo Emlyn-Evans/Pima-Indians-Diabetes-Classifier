@@ -252,7 +252,7 @@ class Classifier:
 
             for key in folds:
 
-                file.write(f"fold{key}\n")
+                file.write(f"fold{key + 1}\n")
 
                 for i in range(len(folds[key])):
 
@@ -262,7 +262,7 @@ class Classifier:
 
                         string += f"{self.training_data[folds[key][i]][j]},"
 
-                    string.strip(",")
+                    string += f"{self.training_labels[folds[key][i]]}"
 
                     file.write(string + "\n")
 
@@ -279,5 +279,5 @@ algorithm = sys.argv[3]
 
 classifier = Classifier(training_file, testing_file, algorithm)
 
-folds = classifier.generate_n_sample_folds(10)
-classifier.write_n_sample_folds("pima-folds.csv", folds)
+# folds = classifier.generate_n_sample_folds(10)
+# classifier.write_n_sample_folds("pima-folds.csv", folds)
