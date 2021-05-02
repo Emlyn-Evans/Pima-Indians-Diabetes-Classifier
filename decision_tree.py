@@ -196,14 +196,49 @@ class Decision_Tree:
 
         return
 
-    def predict(self, test):
+    def predict(self, test, node=None):
 
         # Search down height of tree to find prediction
-        node = self.root
+        if node is None:
+
+            node = self.root
 
         while node.predict is None:
 
-            node = node.children[test[node.rule]]
+            if test[node.rule] in node.children:
+
+                node = node.children[test[node.rule]]
+
+            else:
+
+                # When we encounter a new category not seen before
+                # print("New category")
+
+                weighted_sum = 0
+
+                for i in node.children:
+
+                    prediction = self.predict(test, node.children[i])
+
+                    if prediction == "yes":
+
+                        # print(f"Predicted Yes for {node.children[i].n}")
+
+                        weighted_sum += node.children[i].n
+
+                    else:
+
+                        weighted_sum -= node.children[i].n
+
+                        # print(f"Predicted No for {node.children[i].n}")
+
+                if weighted_sum >= 0:
+
+                    return "yes"
+
+                else:
+
+                    return "no"
 
         return node.predict
 
