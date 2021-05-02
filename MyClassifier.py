@@ -106,7 +106,7 @@ class Classifier:
 
         return matrix
 
-    def cross_validation(self, data_folds, label_folds):
+    def cross_validation(self):
 
         n_folds = 10
         self.generate_n_sample_folds(n_folds)
@@ -143,9 +143,11 @@ class Classifier:
             accuracy = (matrix[0] + matrix[3]) / len(predictions)
             accuracy_sum += accuracy
 
-            # print(f"CV: {i}: Acc: {accuracy}")
+            print(f"CV: {i}: Acc: {accuracy}")
 
         self.accuracy = accuracy_sum / n_folds
+
+        print(f"Total Accuracy: {self.accuracy}")
 
         return
 
@@ -400,3 +402,4 @@ classifier.predict_testing()
 classifier.print_predictions()
 # matrix = classifier.confusion_matrix(classifier.predictions, classifier.training_labels)
 # print((matrix[0] + matrix[3]) / (matrix[0] + matrix[1] + matrix[2] + matrix[3]))
+# classifier.cross_validation()

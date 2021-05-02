@@ -61,9 +61,9 @@ class Node:
 
             for j in range(self.n_attributes):
 
-                # Index 0 is yes and index 1 is no
                 if self.data[i][j] not in self.information_counts[j]:
 
+                    # Index 0 is yes and index 1 is no
                     self.information_counts[j][self.data[i][j]] = [0, 0]
 
                 if self.labels[i] == "yes":
@@ -80,36 +80,48 @@ class Node:
         for i in range(self.n_attributes):
 
             attribute_information = 0
+            split_information = 0
 
             for key in self.information_counts[i]:
 
-                weight = (
+                size_of_branch = (
                     self.information_counts[i][key][0]
                     + self.information_counts[i][key][1]
-                ) / self.n
+                )
+
+                weight = size_of_branch / self.n
 
                 attribute_information += weight * self.compute_information(
                     self.information_counts[i][key][0],
                     self.information_counts[i][key][1],
-                    self.information_counts[i][key][0]
-                    + self.information_counts[i][key][1],
+                    size_of_branch,
+                )
+
+                split_information += -(
+                    (size_of_branch / self.n) * math.log2((size_of_branch / self.n))
                 )
 
             # If the gain is 0, then splitting off this attribute is redundant
             if self.information - attribute_information > 0:
 
-                # print(
-                #     f"Attribute: {i}: Total_Info: {self.information}: Att_Info: {attribute_information}: Gain: {self.information - attribute_information}"
-                # )
+                if split_information > 0:
 
-                if best_gain is None:
+                    gain_ratio = (
+                        self.information - attribute_information
+                    ) / split_information
 
-                    best_gain = self.information - attribute_information
-                    self.rule = i
+                    # print(
+                    #     f"Attribute: {i}: Total_Info: {self.information}: Att_Info: {attribute_information}: Gain: {self.information - attribute_information}: Gain ratio: {gain_ratio}"
+                    # )
 
-                if self.information - attribute_information > best_gain:
+                    if best_gain is None:
 
-                    self.rule = i
+                        best_gain = gain_ratio
+                        self.rule = i
+
+                    if gain_ratio > best_gain:
+
+                        self.rule = i
 
         return
 
@@ -213,6 +225,7 @@ class Decision_Tree:
 
                 # When we encounter a new category not seen before
                 # print("New category")
+                # print(f"Node counts: Yes: {node.n_yes}: No: {node.n_no}")
 
                 weighted_sum = 0
 
@@ -231,6 +244,9 @@ class Decision_Tree:
                         weighted_sum -= node.children[i].n
 
                         # print(f"Predicted No for {node.children[i].n}")
+
+                # Use this for majority node implementation
+                # weighted_sum = node.n_yes - node.n_no
 
                 if weighted_sum >= 0:
 

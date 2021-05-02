@@ -29,6 +29,7 @@ are up to.
 ## 2/5/21 - Emlyn
 
 - Implemented Cross Validation of NB and DT to give us an accuracy score
+- First submission
 
 
 ### Note about DTs
@@ -44,9 +45,10 @@ know which we will have, and we might not have multiple. Hence, the middle
 approach was taken.
 
 ### Note on CV
-10 Fold Cross Validation
-- NB: Accuracy: 0.7460526315789474
-- DT: Accuracy: 0.746138072453862
+10 Fold Cross Validation Accuracy
+- NB: 0.7460526315789474
+- DT path average: 0.746138072453862
+- DT node majority: 0.7474367737525631
 
 Training and testing with the full dataset
 - NB: 0.7526041666666666
