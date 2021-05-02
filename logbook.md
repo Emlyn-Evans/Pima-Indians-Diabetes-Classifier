@@ -28,9 +28,29 @@ are up to.
 
 ## 2/5/21 - Emlyn
 
+- Implemented Cross Validation of NB and DT to give us an accuracy score
 
 
+### Note about DTs
+If the DT encounters a category to split that it hasn't seen before when
+predicting, we must handle it in some way. A simple approach is the take the
+average of yes and no predictions of the node as a prediction. A more
+interesting and cooler approach is to take a weighted average of all possible
+branches for the splits that we do have. I think the most accurate approach is
+to split it down the closest branches (if we have low, then we send it down
+medium, and if we have medium, we send it down low and high). However, this
+approach raises issues as it isn't generalisable for all categories as we don't
+know which we will have, and we might not have multiple. Hence, the middle
+approach was taken.
 
+### Note on CV
+10 Fold Cross Validation
+- NB: Accuracy: 0.7460526315789474
+- DT: Accuracy: 0.746138072453862
+
+Training and testing with the full dataset
+- NB: 0.7526041666666666
+- DT: 0.8216145833333334
 
 ### Note about CFS
 Attributes kept with indexes:

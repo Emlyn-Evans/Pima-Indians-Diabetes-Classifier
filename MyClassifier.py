@@ -18,20 +18,15 @@ class Classifier:
         self.training_data = None
         self.training_labels = None
         self.testing_data = None
+        self.data_folds = None
+        self.label_folds = None
+        self.predictions = None
 
         # Extract the training and testing data
         self.training_data, self.training_labels = self.extract_data(self.training_file)
         self.n_training = len(self.training_data)
         self.testing_data = self.extract_data(self.testing_file)[0]
         self.n_testing = len(self.testing_data)
-
-        if self.algorithm == "NB":
-
-            self.naive_bayes()
-
-        else:
-
-            self.decision_tree()
 
     def extract_data(self, filename):
 
@@ -77,7 +72,84 @@ class Classifier:
 
         return math.exp(-((x - mean) ** 2) / (2 * var)) / math.sqrt(var * 2 * math.pi)
 
-    def naive_bayes(self):
+    def confusion_matrix(self, predictions, labels):
+
+        n = len(predictions)
+        tp = 0
+        tn = 0
+        fp = 0
+        fn = 0
+
+        for i in range(n):
+
+            if predictions[i] == "yes":
+
+                if labels[i] == "yes":
+
+                    tp += 1
+
+                else:
+
+                    fp += 1
+
+            else:
+
+                if labels[i] == "yes":
+
+                    fn += 1
+
+                else:
+
+                    tn += 1
+
+        matrix = [tp, fp, fn, tn]
+
+        return matrix
+
+    def cross_validation(self, data_folds, label_folds):
+
+        n_folds = 10
+        self.generate_n_sample_folds(n_folds)
+
+        accuracy_sum = 0
+
+        for i in range(n_folds):
+
+            training_data = []
+            training_labels = []
+            testing_data = self.data_folds[i]
+            testing_labels = self.label_folds[i]
+
+            for j in range(n_folds):
+
+                if j != i:
+
+                    training_data += self.data_folds[j]
+                    training_labels += self.label_folds[j]
+
+            if self.algorithm == "NB":
+
+                predictions = self.naive_bayes(
+                    training_data, training_labels, testing_data
+                )
+
+            else:
+
+                predictions = self.decision_tree(
+                    training_data, training_labels, testing_data
+                )
+
+            matrix = self.confusion_matrix(predictions, testing_labels)
+            accuracy = (matrix[0] + matrix[3]) / len(predictions)
+            accuracy_sum += accuracy
+
+            # print(f"CV: {i}: Acc: {accuracy}")
+
+        self.accuracy = accuracy_sum / n_folds
+
+        return
+
+    def naive_bayes(self, training_data, training_labels, testing_data):
 
         # Training
         yes_attribute_sums = []
@@ -91,6 +163,8 @@ class Classifier:
         no_attribute_vars = []
         n_no = 0
 
+        n_training = len(training_data)
+
         for i in range(self.n_attributes):
 
             yes_attribute_sums.append(0)
@@ -103,15 +177,15 @@ class Classifier:
             no_attribute_vars.append(0)
 
         # Find mean of all attributes
-        for i in range(self.n_training):
+        for i in range(n_training):
 
-            if self.training_labels[i] == "yes":
+            if training_labels[i] == "yes":
 
                 n_yes += 1
 
                 for j in range(self.n_attributes):
 
-                    yes_attribute_sums[j] += self.training_data[i][j]
+                    yes_attribute_sums[j] += training_data[i][j]
 
             else:
 
@@ -119,7 +193,7 @@ class Classifier:
 
                 for j in range(self.n_attributes):
 
-                    no_attribute_sums[j] += self.training_data[i][j]
+                    no_attribute_sums[j] += training_data[i][j]
 
         for i in range(self.n_attributes):
 
@@ -127,14 +201,14 @@ class Classifier:
             no_attribute_means[i] = no_attribute_sums[i] / n_no
 
         # Find variance (using n-1 not n)
-        for i in range(self.n_training):
+        for i in range(n_training):
 
-            if self.training_labels[i] == "yes":
+            if training_labels[i] == "yes":
 
                 for j in range(self.n_attributes):
 
                     yes_attribute_rss[j] += (
-                        self.training_data[i][j] - yes_attribute_means[j]
+                        training_data[i][j] - yes_attribute_means[j]
                     ) ** 2
 
             else:
@@ -142,7 +216,7 @@ class Classifier:
                 for j in range(self.n_attributes):
 
                     no_attribute_rss[j] += (
-                        self.training_data[i][j] - no_attribute_means[j]
+                        training_data[i][j] - no_attribute_means[j]
                     ) ** 2
 
         for i in range(self.n_attributes):
@@ -153,10 +227,12 @@ class Classifier:
         # P(E | yes) * P(yes) > P(E | no) * P(no) ?
 
         # Testing
-        for i in self.testing_data:
+        prediction = []
 
-            evidence_yes = n_yes / self.n_training
-            evidence_no = n_no / self.n_training
+        for i in testing_data:
+
+            evidence_yes = n_yes / n_training
+            evidence_no = n_no / n_training
 
             for j in range(self.n_attributes):
 
@@ -169,53 +245,89 @@ class Classifier:
 
             if evidence_yes >= evidence_no:
 
-                print("yes")
+                prediction.append("yes")
 
             else:
 
-                print("no")
+                prediction.append("no")
 
-        return evidence_yes, evidence_no
+        return prediction
 
-    def decision_tree(self):
+    def decision_tree(self, training_data, training_labels, testing_data):
 
         # What happens when we get given categories we haven't seen before?
         # i.e. we only see high or low, and we get thrown a medium to test?
 
-        tree = Decision_Tree(self.training_data, self.training_labels)
+        tree = Decision_Tree(training_data, training_labels)
 
-        tree.print_tree_dfs()
+        # tree.print_tree_dfs()
 
         # test = ["overcast", "hot", "normal", "false"]
         # test = ["rainy", "cool", "normal", "true"]
 
         # print(tree.predict(test))
 
+        predictions = []
+
+        for i in range(len(testing_data)):
+
+            # print(testing_data[i])
+
+            predictions.append(tree.predict(testing_data[i]))
+
+        return predictions
+
+    def predict_testing(self):
+
+        if self.algorithm == "NB":
+
+            self.predictions = self.naive_bayes(
+                self.training_data, self.training_labels, self.testing_data
+            )
+
+        else:
+
+            self.predictions = self.decision_tree(
+                self.training_data, self.training_labels, self.testing_data
+            )
+
         return
+
+    def print_predictions(self, predictions=None):
+
+        if predictions is None:
+
+            predictions = self.predictions
+
+        for i in predictions:
+
+            print(i)
 
     def generate_n_sample_folds(self, n):
 
-        folds = {}
+        self.data_folds = {}
+        self.label_folds = {}
 
         for i in range(n):
 
-            folds[i] = []
+            self.data_folds[i] = []
+            self.label_folds[i] = []
 
-        yes_index = []
+        yes_data = []
         size_yes = 0
-        no_index = []
+        no_data = []
         size_no = 0
 
         for i in range(self.n_training):
 
             if self.training_labels[i] == "yes":
 
-                yes_index.append(i)
+                yes_data.append(self.training_data[i])
                 size_yes += 1
 
             else:
 
-                no_index.append(i)
+                no_data.append(self.training_data[i])
                 size_no += 1
 
         # Split yes classes between n folds
@@ -223,46 +335,50 @@ class Classifier:
 
             for i in range(n):
 
-                folds[i].append(yes_index[size_yes - 1 - i])
+                self.data_folds[i].append(yes_data[size_yes - 1 - i])
+                self.label_folds[i].append("yes")
 
             size_yes -= n
 
         for i in range(size_yes):
 
-            folds[i].append(yes_index[size_yes - 1 - i])
+            self.data_folds[i].append(yes_data[size_yes - 1 - i])
+            self.label_folds[i].append("yes")
 
         # Split no classes between n folds
         while size_no >= n:
 
             for i in range(n):
 
-                folds[i].append(no_index[size_no - 1 - i])
+                self.data_folds[i].append(no_data[size_no - 1 - i])
+                self.label_folds[i].append("no")
 
             size_no -= n
 
         for i in range(size_no):
 
-            folds[i].append(no_index[size_no - 1 - i])
+            self.data_folds[i].append(no_data[size_no - 1 - i])
+            self.label_folds[i].append("no")
 
-        return folds
+        return
 
-    def write_n_sample_folds(self, filename, folds):
+    def write_n_sample_folds(self, filename):
 
         with open(filename, "w") as file:
 
-            for key in folds:
+            for key in self.data_folds:
 
                 file.write(f"fold{key + 1}\n")
 
-                for i in range(len(folds[key])):
+                for i in range(len(self.data_folds[key])):
 
                     string = ""
 
                     for j in range(self.n_attributes):
 
-                        string += f"{self.training_data[folds[key][i]][j]},"
+                        string += f"{self.data_folds[key][i][j]},"
 
-                    string += f"{self.training_labels[folds[key][i]]}"
+                    string += f"{self.label_folds[key][i]}"
 
                     file.write(string + "\n")
 
@@ -270,7 +386,9 @@ class Classifier:
 
 
 # Run with: python3 MyClassifier.py pima.csv pima.csv NB
+# Accuracy: 0.7460526315789474
 # Run with: python3 MyClassifier.py pima-indians-diabetes.discrete pima-indians-diabetes.discrete DT
+# Accuracy: 0.746138072453862
 
 # Reading command line arguments
 training_file = sys.argv[1]
@@ -278,6 +396,7 @@ testing_file = sys.argv[2]
 algorithm = sys.argv[3]
 
 classifier = Classifier(training_file, testing_file, algorithm)
-
-# folds = classifier.generate_n_sample_folds(10)
-# classifier.write_n_sample_folds("pima-folds.csv", folds)
+classifier.predict_testing()
+classifier.print_predictions()
+# matrix = classifier.confusion_matrix(classifier.predictions, classifier.training_labels)
+# print((matrix[0] + matrix[3]) / (matrix[0] + matrix[1] + matrix[2] + matrix[3]))
