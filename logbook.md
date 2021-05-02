@@ -42,6 +42,8 @@ between two attributes produces the same information gain, the gain ratio will
 at least choose the attribute with less categories, which makes the tree
 simpler. If the attributes have the same number of categories, then the gain
 ratio is the same as the information gain anyway.
+However, using gain ratio makes me fail a testcase so information gain it is.
+Talk about gain ratio in the report.
 
 ### Note 2 about DTs
 If the DT encounters a category to split that it hasn't seen before when

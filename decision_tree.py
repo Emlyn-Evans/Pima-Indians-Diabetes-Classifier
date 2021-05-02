@@ -80,7 +80,6 @@ class Node:
         for i in range(self.n_attributes):
 
             attribute_information = 0
-            split_information = 0
 
             for key in self.information_counts[i]:
 
@@ -97,32 +96,20 @@ class Node:
                     size_of_branch,
                 )
 
-                split_information += -(
-                    (size_of_branch / self.n) * math.log2((size_of_branch / self.n))
-                )
-
             # If the gain is 0, then splitting off this attribute is redundant
             gain = self.information - attribute_information
 
             if gain > 0:
 
-                if split_information > 0:
+                if best_gain is None:
 
-                    gain_ratio = gain / split_information
+                    best_gain = gain
+                    self.rule = i
 
-                    # print(
-                    #     f"Attribute: {i}: Total_Info: {self.information}: Att_Info: {attribute_information}: Gain: {self.information - attribute_information}: Gain ratio: {gain_ratio}"
-                    # )
+                if gain > best_gain:
 
-                    if best_gain is None:
-
-                        best_gain = gain_ratio
-                        self.rule = i
-
-                    if gain_ratio > best_gain:
-
-                        self.rule = i
-                        best_gain = gain_ratio
+                    self.rule = i
+                    best_gain = gain
 
         return
 
