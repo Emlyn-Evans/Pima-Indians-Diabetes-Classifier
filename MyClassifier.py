@@ -74,6 +74,7 @@ class Classifier:
 
     def confusion_matrix(self, predictions, labels):
 
+        # Generate confusion matrix for accuracy, sensitivity, specificity
         n = len(predictions)
         tp = 0
         tn = 0
@@ -113,6 +114,8 @@ class Classifier:
 
         accuracy_sum = 0
 
+        # Iteratively set the training and testing data to include all but 1
+        # fold
         for i in range(n_folds):
 
             training_data = []
@@ -143,17 +146,17 @@ class Classifier:
             accuracy = (matrix[0] + matrix[3]) / len(predictions)
             accuracy_sum += accuracy
 
-            print(f"CV: {i}: Acc: {accuracy}")
+            # print(f"Fold: {i}: Acc: {accuracy}")
 
         self.accuracy = accuracy_sum / n_folds
 
-        print(f"Total Accuracy: {self.accuracy}")
+        # print(f"Total Accuracy: {self.accuracy}")
 
         return
 
     def naive_bayes(self, training_data, training_labels, testing_data):
 
-        # Training
+        # Training lists for Bayes' Theorem computation
         yes_attribute_sums = []
         yes_attribute_means = []
         yes_attribute_rss = []
@@ -226,8 +229,6 @@ class Classifier:
             yes_attribute_vars[i] = yes_attribute_rss[i] / (n_yes - 1)
             no_attribute_vars[i] = no_attribute_rss[i] / (n_no - 1)
 
-        # P(E | yes) * P(yes) > P(E | no) * P(no) ?
-
         # Testing
         prediction = []
 
@@ -236,6 +237,7 @@ class Classifier:
             evidence_yes = n_yes / n_training
             evidence_no = n_no / n_training
 
+            # Plug values into normal pdf and sum evidence
             for j in range(self.n_attributes):
 
                 evidence_yes *= self.normal_pdf(
@@ -245,6 +247,7 @@ class Classifier:
                     i[j], no_attribute_means[j], no_attribute_vars[j]
                 )
 
+            # If P(E | yes) * P(yes) > P(E | no) * P(no), we take yes
             if evidence_yes >= evidence_no:
 
                 prediction.append("yes")
@@ -257,23 +260,18 @@ class Classifier:
 
     def decision_tree(self, training_data, training_labels, testing_data):
 
-        # What happens when we get given categories we haven't seen before?
-        # i.e. we only see high or low, and we get thrown a medium to test?
-
+        # Create and build the decision tree
         tree = Decision_Tree(training_data, training_labels)
 
         # tree.print_tree_dfs()
 
-        # test = ["overcast", "hot", "normal", "false"]
-        # test = ["rainy", "cool", "normal", "true"]
-
-        # print(tree.predict(test))
+        # Test for when we encounter a new category not seen before in testing
+        # test = ["low", "high", "high", "high", "high", "high", "high", "potato"]
+        # print(f"YEET: {tree.predict(test)}")
 
         predictions = []
 
         for i in range(len(testing_data)):
-
-            # print(testing_data[i])
 
             predictions.append(tree.predict(testing_data[i]))
 
@@ -307,6 +305,7 @@ class Classifier:
 
     def generate_n_sample_folds(self, n):
 
+        # Generate n sample folds for cross validation
         self.data_folds = {}
         self.label_folds = {}
 
@@ -320,6 +319,7 @@ class Classifier:
         no_data = []
         size_no = 0
 
+        # Count number of yes and no data lines for stratification
         for i in range(self.n_training):
 
             if self.training_labels[i] == "yes":
@@ -366,6 +366,7 @@ class Classifier:
 
     def write_n_sample_folds(self, filename):
 
+        # Write sample folds to output file
         with open(filename, "w") as file:
 
             for key in self.data_folds:
@@ -387,19 +388,30 @@ class Classifier:
                 file.write("\n")
 
 
-# Run with: python3 MyClassifier.py pima.csv pima.csv NB
-# Accuracy: 0.7460526315789474
-# Run with: python3 MyClassifier.py pima-indians-diabetes.discrete pima-indians-diabetes.discrete DT
-# Accuracy: 0.746138072453862
-
 # Reading command line arguments
 training_file = sys.argv[1]
 testing_file = sys.argv[2]
 algorithm = sys.argv[3]
 
 classifier = Classifier(training_file, testing_file, algorithm)
+
+# For cross validation, uncomment lines below:
+# classifier.cross_validation()
+# print(classifier.accuracy)
+
+# For Naive Bayes, run with: python3 MyClassifier.py pima.csv pima.csv NB
+# Accuracy
+# - Full dataset: 0.7526041666666666
+# - 10 folds CV: 0.7460526315789474
+# For Decision Tree, run with: python3 MyClassifier.py pima-indians-diabetes.discrete pima-indians-diabetes.discrete DT
+# Accuracy
+# - Full dataset: 0.8190104166666666
+# - 10 folds CV: 0.7409090909090909
+
+# For normal functionality, uncomment lines below:
 classifier.predict_testing()
 classifier.print_predictions()
+
+# For output on full dataset:
 # matrix = classifier.confusion_matrix(classifier.predictions, classifier.training_labels)
 # print((matrix[0] + matrix[3]) / (matrix[0] + matrix[1] + matrix[2] + matrix[3]))
-# classifier.cross_validation()

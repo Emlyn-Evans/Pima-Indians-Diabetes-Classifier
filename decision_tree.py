@@ -102,13 +102,13 @@ class Node:
                 )
 
             # If the gain is 0, then splitting off this attribute is redundant
-            if self.information - attribute_information > 0:
+            gain = self.information - attribute_information
+
+            if gain > 0:
 
                 if split_information > 0:
 
-                    gain_ratio = (
-                        self.information - attribute_information
-                    ) / split_information
+                    gain_ratio = gain / split_information
 
                     # print(
                     #     f"Attribute: {i}: Total_Info: {self.information}: Att_Info: {attribute_information}: Gain: {self.information - attribute_information}: Gain ratio: {gain_ratio}"
@@ -122,6 +122,7 @@ class Node:
                     if gain_ratio > best_gain:
 
                         self.rule = i
+                        best_gain = gain_ratio
 
         return
 
@@ -151,7 +152,7 @@ class Decision_Tree:
         # Compute the best attribute to split off at each node
         node.compute_best_attribute()
 
-        # Stopping condition: no attributes give information gain
+        # Stopping condition: no attributes gives information gain
         if node.rule is None:
 
             # We take the majority guess
@@ -204,7 +205,23 @@ class Decision_Tree:
             )
 
             node.children[key] = child
-            self.compute_tree_recursion(child)
+
+            if child.n > 0:
+
+                self.compute_tree_recursion(child)
+
+            else:
+
+                # Stopping condition: if child is empty
+                if node.n_yes >= node.n_no:
+
+                    child.predict = "yes"
+
+                else:
+
+                    child.predict = "no"
+
+                child.rule_string += f": {child.predict}"
 
         return
 
@@ -224,9 +241,6 @@ class Decision_Tree:
             else:
 
                 # When we encounter a new category not seen before
-                # print("New category")
-                # print(f"Node counts: Yes: {node.n_yes}: No: {node.n_no}")
-
                 weighted_sum = 0
 
                 for i in node.children:
@@ -235,15 +249,11 @@ class Decision_Tree:
 
                     if prediction == "yes":
 
-                        # print(f"Predicted Yes for {node.children[i].n}")
-
                         weighted_sum += node.children[i].n
 
                     else:
 
                         weighted_sum -= node.children[i].n
-
-                        # print(f"Predicted No for {node.children[i].n}")
 
                 # Use this for majority node implementation
                 # weighted_sum = node.n_yes - node.n_no
