@@ -33,6 +33,10 @@ are up to.
 - Implemented handling for when we encounter new categories when predicting
 - Final submission
 
+## 11/5/21 - Archie
+- Begin report write-up on Overleaf
+- Finished Introduction section (subject to review) and began Data section
+- Need to add why the features were chosen during CFS
 
 # Notes
 
