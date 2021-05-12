@@ -297,7 +297,7 @@ class Decision_Tree:
 
                 attribute = headers[node.parent.rule]
 
-            buffer = "|    " * node.parent.depth
+            buffer = "|   " * node.parent.depth
 
             buffer += f"{attribute} = {node.category}"
 

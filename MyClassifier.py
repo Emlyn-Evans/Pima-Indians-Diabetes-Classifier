@@ -263,7 +263,7 @@ class Classifier:
         # Create and build the decision tree
         tree = Decision_Tree(training_data, training_labels)
 
-        # tree.print_tree_dfs()
+        tree.print_tree_dfs()
 
         # Test for when we encounter a new category not seen before in testing
         # test = ["low", "high", "high", "high", "high", "high", "high", "potato"]
