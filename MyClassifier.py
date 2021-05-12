@@ -399,14 +399,27 @@ classifier = Classifier(training_file, testing_file, algorithm)
 # classifier.cross_validation()
 # print(classifier.accuracy)
 
-# For Naive Bayes, run with: python3 MyClassifier.py pima.csv pima.csv NB
+# For Naive Bayes, run with:
+# python3 MyClassifier.py pima.csv pima.csv NB
+# python3 MyClassifier.py pima-CFS.csv pima-CFS.csv NB
 # Accuracy
+# All attributes
 # - Full dataset: 0.7526041666666666
 # - 10 folds CV: 0.7460526315789474
-# For Decision Tree, run with: python3 MyClassifier.py pima-indians-diabetes.discrete pima-indians-diabetes.discrete DT
+# CFS
+# - Full dataset: 0.7682291666666666
+# - 10 folds CV: 0.7630724538619276
+
+# For Decision Tree, run with:
+# python3 MyClassifier.py pima-indians-diabetes.discrete pima-indians-diabetes.discrete DT
+# python3 MyClassifier.py pima-discretised-CFS.csv pima-discretised-CFS.csv DT
 # Accuracy
+# All attributes
 # - Full dataset: 0.8190104166666666
-# - 10 folds CV: 0.7409090909090909
+# - 10 folds CV: 0.746138072453862
+# CFS
+# - Full dataset: 0.8033854166666666
+# - 10 folds CV: 0.7852529049897472
 
 # For normal functionality, uncomment lines below:
 classifier.predict_testing()

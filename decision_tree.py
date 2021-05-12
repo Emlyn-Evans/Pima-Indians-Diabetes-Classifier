@@ -13,6 +13,8 @@ class Node:
         n_yes,
         n_no,
         rule_string,
+        category,
+        parent,
     ):
 
         self.depth = depth
@@ -28,6 +30,8 @@ class Node:
         self.predict = None
         self.rule_string = rule_string
         self.children = {}
+        self.category = category
+        self.parent = parent
 
         return
 
@@ -130,7 +134,7 @@ class Decision_Tree:
 
                 n_no += 1
 
-        self.root = Node(1, data, labels, len(data[0]), n_yes, n_no, "")
+        self.root = Node(0, data, labels, len(data[0]), n_yes, n_no, "", None, None)
 
         self.compute_tree_recursion(self.root)
 
@@ -189,6 +193,8 @@ class Decision_Tree:
                 node.information_counts[node.rule][key][0],
                 node.information_counts[node.rule][key][1],
                 node.rule_string + f"{key}",
+                key,
+                node,
             )
 
             node.children[key] = child
@@ -261,7 +267,53 @@ class Decision_Tree:
 
             node = self.root
 
-        print(f"{'-' * node.depth} {node.rule_string}")
+        headers = [
+            "Pregnancies",
+            "Plasma Glucose Concentration",
+            "Diastolic Blood Pressure",
+            "Triceps Skin Fold Thickness",
+            "2-hour Serum Insulin",
+            "Body Mass Index",
+            "Diabetes Pedigree Function",
+            "Age",
+        ]
+        cfs_headers = [
+            "Plasma Glucose Concentration",
+            "2-hour Serum Insulin",
+            "Body Mass Index",
+            "Diabetes Pedigree Function",
+            "Age",
+        ]
+
+        if node.depth > 0:
+
+            attribute = ""
+
+            if node.n_attributes == 5:
+
+                attribute = cfs_headers[node.parent.rule]
+
+            else:
+
+                attribute = headers[node.parent.rule]
+
+            buffer = "|    " * node.parent.depth
+
+            buffer += f"{attribute} = {node.category}"
+
+            if node.predict is not None:
+
+                buffer += f": {node.predict}"
+
+                if node.predict == "yes":
+
+                    buffer += f" ({node.n_yes}/{node.n_no})"
+
+                else:
+
+                    buffer += f" ({node.n_no}/{node.n_yes})"
+
+            print(buffer)
 
         for i in node.children:
 
